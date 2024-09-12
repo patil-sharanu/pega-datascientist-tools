@@ -130,6 +130,7 @@ def _extract_keys(
     """
     # Checking for the 'column is None/Null' case
     if df.collect_schema()[col] != pl.Utf8:
+    if df.collect_schema()[col] != pl.Utf8:
         return df
 
     # Checking for the 'empty df' case

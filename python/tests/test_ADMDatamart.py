@@ -90,7 +90,7 @@ def test_import_utils_with_importing(test):
         name="Data-Decision-ADM-ModelSnapshot_pyModelSnapshots_20210101T010000_GMT.zip",
     )
     assert isinstance(output, pl.LazyFrame)
-    assert len(output.columns) == 10
+    assert len(output.collect_schema().names()) == 10
     assert output.select(pl.len()).collect().item() == 20
     assert renamed == {
         "Channel",
@@ -169,7 +169,7 @@ def test_import_no_subset(test, data):
         subset=False,
         typesetting_table="ADMModelSnapshot",
     )[0]
-    assert "Junk" in output.columns
+    assert "Junk" in output.collect_schema().names()
 
 
 def test_extract_treatment(test, data):
@@ -218,7 +218,7 @@ def test_apply_query(test, data):
         for frame1, frame2 in itertools.combinations(frames, 2)
     ]
 
-    with pytest.raises(pl.ColumnNotFoundError):
+    with pytest.raises(ColumnNotFoundError):
         test._apply_query(data, pl.col("TEST") > 0)
 
     with pytest.raises(ValueError):
@@ -242,7 +242,7 @@ def test_set_types(test):
         },
         strict=False,
     )
-    with pytest.raises((pl.ComputeError, pl.InvalidOperationError)):
+    with pytest.raises((ComputeError, InvalidOperationError)):
         test._set_types(
             df,
             timestamp_fmt="%Y%m%dT%H%M%S",

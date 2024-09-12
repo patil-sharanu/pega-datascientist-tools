@@ -801,7 +801,7 @@ class BinAggregator(LazyNamespace):
             binning = binning.lazy()
 
         # Add Lift column if not present
-        if "Lift" not in binning.columns:
+        if "Lift" not in binning.collect_schema().names():
             binning = binning.with_columns(
                 (lift(pl.col("BinPositives"), pl.col("BinNegatives")) - 1.0).alias(
                     "Lift"
@@ -809,7 +809,7 @@ class BinAggregator(LazyNamespace):
             )
 
         # Optionally a shading expression
-        if "BinPositives" in binning.columns:
+        if "BinPositives" in binning.collect_schema().names():
             shading_expr = pl.col("BinPositives") <= 5
         else:
             shading_expr = pl.lit(False)
@@ -913,7 +913,9 @@ class BinAggregator(LazyNamespace):
             topic = binning.columns[-1]  # assuming the roll-up column is the last one
             model_facet = (
                 # if there are multiple topics, take the topic otherwise assume not rolled up over a topic
-                topic if binning.select(pl.col(topic).n_unique() > 1).item() else None
+                topic
+                if binning.select(pl.col(topic).n_unique() > 1).item()
+                else None
             )
             predictor_facet = (
                 # check if there are multiple predictors
