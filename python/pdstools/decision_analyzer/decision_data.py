@@ -6,6 +6,7 @@ import polars as pl
 import polars.selectors as cs
 
 from .data_read_utils import validate_columns
+from .table_definition import audit_tag_mapping
 from .utils import (
     NBADScope_Mapping,
     apply_filter,
@@ -108,12 +109,7 @@ class DecisionData:
         # start with a superset in the right order.
         # TODO: support human-friendly names, to show "Final" as "Presented" for example
         elif self.extract_type == "decision_analyzer":
-            self.AvailableNBADStages = [
-                "Eligibility",
-                "Applicability",
-                "Suitability",
-            ] + self.AvailableNBADStages
-
+            self.AvailableNBADStages = list(audit_tag_mapping.keys())
             available_stages = (
                 self.unfiltered_raw_decision_data.select(
                     pl.col("pxEngagementStage").unique()
@@ -126,11 +122,9 @@ class DecisionData:
                 stage for stage in self.AvailableNBADStages if stage in available_stages
             ]
             self.NBADStages_RemainingView = ["Total Available"] + list(
-                map(lambda x: "After " + x, self.AvailableNBADStages)
+                map(lambda x: "After " + x, list(audit_tag_mapping.keys()))
             )
-            self.NBADStages_FilterView = self.AvailableNBADStages + ["Final"]
-            # "Final" is a specific value in DA data
-
+            self.NBADStages_FilterView = list(audit_tag_mapping.keys())
             self.NBADStages_Mapping = {
                 j: self.NBADStages_RemainingView[i]
                 for (i, j) in enumerate(self.NBADStages_FilterView)
@@ -417,7 +411,16 @@ class DecisionData:
             apply_filter(self.sample, additional_filters)
             .with_columns(overrides)
             # TODO generalize this to support stages from arbitration to final - there already is a function for that
-            .filter(pl.col("pxEngagementStage").is_in(["Arbitration", "Final"]))
+            .filter(
+                pl.col("pxEngagementStage").is_in(
+                    [
+                        "Final",
+                        "Contact Policies & Final Action processing",
+                        "Bundling",
+                        "Arbitration",
+                    ]
+                )
+            )
             .with_columns(
                 prio_PVCL=(
                     pl.col("FinalPropensity")
@@ -801,7 +804,7 @@ class DecisionData:
             .select(
                 [
                     pl.col("pyName")
-                    .where(pl.col(x) <= win_rank)
+                    .filter(pl.col(x) <= win_rank)
                     .count()
                     .cast(
                         pl.Int32

@@ -1,0 +1,13 @@
+pandas
+numpy
+tabulate
+plotly>=5.5.0
+requests
+pydot
+tqdm
+polars
+pyarrow
+pyyaml
+aioboto3>=11.0
+great_tables
+polars-hash
