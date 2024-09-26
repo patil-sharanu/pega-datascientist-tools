@@ -340,7 +340,6 @@ def configure_predictor_categorization():
     st.plotly_chart(fig)
 
 
-@st.cache
 def convert_df(df):
     return df.write_csv().encode("utf-8")
 
